@@ -1,7 +1,10 @@
 import { Project, StructureKind } from "ts-morph";
 
-export abstract class tscoder {
-    public static test1() {
+export default abstract class tscoder {
+    public static test0() {
+        return "test0";
+    }
+        public static test1() {
         const project = new Project({
             tsConfigFilePath: "testsrc/tsconfig.json",
         });

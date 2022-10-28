@@ -1,6 +1,6 @@
 {
   "name": "tscoder",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "A TypeScript general purpose code generator.",
   "keywords": ["typescript", "CSV", "JSON5"],
   "author": "Sergio Lindau",
@@ -13,7 +13,7 @@
     "prebuild": "rimraf dist",
     "build": "tsc",
     "build:dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "start": "node dist/index.js",
+    "start": "echo \"Error: no cli specified for this project.\" && exit 1",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

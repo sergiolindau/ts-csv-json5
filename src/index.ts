@@ -1,1 +1,1 @@
-export { tscoder } from "./tscoder"
+export * from "./tscoder"
