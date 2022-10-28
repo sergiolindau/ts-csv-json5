@@ -1,3 +1,6 @@
+# Compiled output
+dist/
+
 # Logs
 logs
 *.log
@@ -37,8 +40,10 @@ bower_components
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
-# Dependency directories
+# Dependency directories and files
 node_modules/
+package-lock.json
+yarn.lock
 jspm_packages/
 
 # TypeScript v1 declaration files
@@ -71,6 +76,8 @@ typings/
 # dotenv environment variables file
 .env
 .env.test
+# save .env files inside packages directory (react applications)
+!packages/*/.env
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
