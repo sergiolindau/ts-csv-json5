@@ -1,8 +1,10 @@
 {
   "name": "ts-csv-json5",
   "version": "0.0.1",
-  "description": "",
-  "private": true,
+  "description": "A CSV and JSON5 tools for generate related TypeScript code.",
+  "keywords": ["typescript", "CSV", "JSON5"],
+  "author": "Sergio Lindau",
+  "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -10,13 +12,10 @@
     "update": "ncu -u",
     "prebuild": "rimraf dist",
     "build": "tsc",
-    "start": "node dist/index.js",
     "build:dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "UNLICENSED",
   "dependencies": {
     "ts-morph": "^16.0.0"
   },
