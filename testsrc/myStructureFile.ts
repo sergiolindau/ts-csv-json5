@@ -2,5 +2,5 @@ enum MyEnum {
     member
 }
 
-class MyClass {
+class MyClassx {
 }

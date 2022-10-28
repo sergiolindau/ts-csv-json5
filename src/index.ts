@@ -16,7 +16,7 @@ const sourceFile = project.createSourceFile("testsrc/myStructureFile.ts",
             }],
         }, {
             kind: StructureKind.Class,
-            name: "MyClass"
+            name: "MyClassx"
         }],
     },
     {

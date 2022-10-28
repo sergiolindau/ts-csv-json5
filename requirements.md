@@ -1,0 +1,1 @@
+- [ ] Provides a method for transform CSV in a JSON and .ts file (containing types used in JSON).
