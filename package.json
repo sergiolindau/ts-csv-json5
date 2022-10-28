@@ -1,7 +1,7 @@
 {
-  "name": "ts-csv-json5",
+  "name": "tscoder",
   "version": "0.0.1",
-  "description": "A CSV and JSON5 tools for generate related TypeScript code.",
+  "description": "A TypeScript general purpose code generator.",
   "keywords": ["typescript", "CSV", "JSON5"],
   "author": "Sergio Lindau",
   "license": "MIT",
