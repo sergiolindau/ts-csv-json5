@@ -2,7 +2,11 @@
   "name": "tscoder",
   "version": "1.0.0",
   "description": "A TypeScript general purpose code generator.",
-  "keywords": ["typescript", "CSV", "JSON5"],
+  "keywords": [
+    "typescript",
+    "CSV",
+    "JSON5"
+  ],
   "author": "Sergio Lindau",
   "license": "MIT",
   "main": "dist/index.js",
@@ -17,9 +21,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "event-stream": "^4.0.1",
+    "json5": "^2.2.1",
     "ts-morph": "^16.0.0"
   },
   "devDependencies": {
+    "@types/event-stream": "^4.0.0",
     "@types/node": "^18.11.7",
     "rimraf": "^3.0.2",
     "ts-node-dev": "^2.0.0",

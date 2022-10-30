@@ -1,6 +1,8 @@
 import { Project, StructureKind } from "ts-morph";
 
-export default abstract class tscoder {
+export const test = () => { return "tscoder.test() executed" }
+
+export abstract class tscoderx {
     public static test0() {
         return "test0";
     }
