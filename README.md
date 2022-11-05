@@ -1,10 +1,7 @@
-# ts-csv-json5
-A CSV and JSON5 tools for generate related TypeScript code.
+# tscoder
 
-## Packages
+* This package is under development and is unpublished.
 
-- [ts-morph](https://www.npmjs.com/package/ts-morph) - TypeScript Compiler API wrapper. Provides an easier way to programmatically navigate and manipulate TypeScript and JavaScript code.
+* A CSV file parser.
 
-## Resources
-
-- [TypeScript AST Viewer](https://ts-ast-viewer.com)
+* [CSV parser](./doc/rfc-4180-parser.md)
