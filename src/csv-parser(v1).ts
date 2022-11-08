@@ -2,9 +2,7 @@
  * File: csv-parser.ts
  * Purpose: Implements CsvParser class.
  * 
- * References:
- * - https://www.rfc-editor.org/rfc/rfc4180
- * - https://www.unicode.org/reports/tr6/tr6-4.html
+ * Reference: https://www.rfc-editor.org/rfc/rfc4180
  */
 
 const debug = false;
@@ -40,15 +38,12 @@ const HS = 0x20; /* Horizotal Space */
 
 /* CsvParser instance configuration. */
 export interface CsvParserConfiguration {
-    delimiter: string,
+    separator: string,
     quote: string,
-    quoteRequired: boolean,
     encoding: BufferEncoding,
     onError: ErrorCallback,
-    onHeaderField: FieldCallback,
     onField: FieldCallback,
-    onHeader: RecordCallBack,
-    onRecord: RecordCallBack,
+    onRecord: RecordCallBack
 }
 export type CsvParserOptions = Partial<CsvParserConfiguration>
 
@@ -66,11 +61,8 @@ export interface CsvParserErrorInfo {
 export class CsvParser {
     // TODO: Remove debug options.
     public debug: boolean = debug;
-    private _initial!: boolean; // Only true if parse or accept method never called.
-    private _bom!: boolean; // If true, detect and exclude the byte order mark (BOM) from the CSV input if present.
-    private _delimiter!: number;
-    private _quote!: number; // Optional character surrounding a field as one character only; disabled if null, false or empty; defaults to double quote.
-    private _quote_required!: boolean;
+    private _separator!: number;
+    private _quote!: number;
     private _encoding!: BufferEncoding;
     private _state!: number;
     private _saved_state!: number;
@@ -79,19 +71,14 @@ export class CsvParser {
     private _saved_pos!: number;
     private _saved_index!: number;
     private _field!: string;
-    private _header!: string[];
     private _record!: string[];
     private _parsed!: string;
     private _transition!: TransitionTable;
     private _final!: FinalStates;
 
-    private _on_field_callback!: FieldCallback | undefined | null;
-    private _on_record_callback!: RecordCallBack;
-    private _on_error!: ErrorCallback;
-    private _on_header_field!: FieldCallback | undefined | null;
-    private _on_field!: FieldCallback | undefined | null;
-    private _on_header!: RecordCallBack | undefined | null;
-    private _on_record!: RecordCallBack;
+    private onError!: ErrorCallback;
+    private onField!: FieldCallback | undefined | null;
+    private onRecord!: RecordCallBack;
 
     /**
      * The constructor is not public because the class provides a static
@@ -103,10 +90,10 @@ export class CsvParser {
     }
 
     public unparseRecord(record: string[]): string {
-        return `${this.quote}${record.map(field => field.replace(this.quote, this.quote + this.quote)).join(this.quote + this.delimiter + this.quote)}${this.quote}`
+        return `${this.quote}${record.map(field => field.replace(this.quote, this.quote + this.quote)).join(this.quote + this.separator + this.quote)}${this.quote}`
     }
 
-    private defaultDelimiter = ','.charCodeAt(0);
+    private defaultSeparator = ','.charCodeAt(0);
     private defaultQuote = '"'.charCodeAt(0);
 
     private defaultOnError: ErrorCallback = (err: CsvParserErrorInfo) => {
@@ -118,8 +105,7 @@ export class CsvParser {
     }
 
     private defaultOnRecord: RecordCallBack = (record: string[], line?: number): string => {
-        //TODO: remove substring (only for debug)
-        let result = `[${(this._on_header?(line!-1):line)?.toString().padStart(6, ' ')}] : ${this.unparseRecord(record)}`.substring(0, 60) + '...';
+        let result = `[${line?.toString().padStart(4, ' ')}] : ${this.unparseRecord(record)}`;
         console.log(result);
         return result;
     };
@@ -129,8 +115,7 @@ export class CsvParser {
      * @param options 
      */
     public reset(options?: CsvParserOptions): void {
-        this._initial = true;
-        this._state = 0;
+        this._state = 1;
         this._lineno = 1;
         this._pos = 0;
         this._saved_pos = NaN;
@@ -140,133 +125,100 @@ export class CsvParser {
         this._record = [];
         this._parsed = '';
         if (!options) {
-            this._delimiter = this.defaultDelimiter;
+            this._separator = this.defaultSeparator;
             this._quote = this.defaultQuote;
-            this._quote_required = false;
             this._encoding = 'utf-8'
-            this._on_error = this.defaultOnError;
-            this._on_header_field = null;
-            this._on_field = null;
-            this._on_field_callback = null;
-            this._on_header = null;
-            this._on_record = this.defaultOnRecord;
+            this.onError = this.defaultOnError;
+            this.onField = null;
+            this.onRecord = this.defaultOnRecord;
         }
         else {
-            if (options.delimiter) {
-                if (options.delimiter.length != 1) throw new Error('Delimiter must be a string of one character (default is \',\')');
-                this._delimiter = options.delimiter.charCodeAt(0);
+            if (options.separator) {
+                if (options.separator.length != 1) throw new Error('Separator must be a string of one character (default is \',\')');
+                this._separator = options.separator.charCodeAt(0);
             }
             else {
-                this._delimiter = this.defaultDelimiter;
+                this._separator = this.defaultSeparator;
             }
             if (options.quote) {
                 if (options.quote.length > 1) throw new Error('Quote delimiter must be null or a string of one character (default is \'"\')');
                 if (options.quote.length) {
                     this._quote = options.quote.charCodeAt(0);
-                    this._quote_required = options.quoteRequired ? options.quoteRequired : false;
                 }
                 else {
                     this._quote = 0;
-                    this._quote_required = false;
                 }
 
             }
             else {
                 this._quote = 0;
-                this._quote_required = false;
             }
-            this._encoding = options.encoding ? options.encoding : 'utf-8'
-            this._on_error = options.onError ? options.onError : this.defaultOnError;
-            this._on_header_field = options.onHeaderField ? options.onHeaderField : null;
-            this._on_field = options.onField ? options.onField : null;
-            this._on_header = options.onHeader ? options.onHeader : null;
-            this._on_record = options.onRecord ? options.onRecord : this.defaultOnRecord;
-        }
-        if (this._on_header) {
-            this._on_record_callback = (record: string[], line?: number): string => {
-                this._on_record_callback = this._on_record;
-                this._on_field_callback = this._on_field;
-                this._header = this._record;
-                this._parsed += this._on_header!(this._header);
-                return '';
-            };
-        }
-        else {
-            this._on_record_callback = this._on_record;
-        }
-        if (this._on_header_field) {
-            if (!this._on_header) {
-                this._on_record_callback = (record: string[], line?: number): string => {
-                    this._on_field_callback = this._on_field;
-                    return '';
-                }
-            }
-            this._on_field_callback = this._on_header_field;
+            this._encoding = (options.encoding) ? options.encoding : 'utf-8'
+            this.onError = (options.onError) ? options.onError : this.defaultOnError;
+            this.onField = (options.onField) ? options.onField : null;
+            this.onRecord = (options.onRecord) ? options.onRecord : this.defaultOnRecord;
         }
         this._transition = [
-            /*  0 */[
+            /*  0 */[],
+            /*  1 */[
                 [this._quote, 3, 1],
-                [this._delimiter, 0, 3],
-                [CR, 1, 4],
-                [LF, 0, 4],
+                [this._separator, 1, 3],
+                [CR, 8, 4],
+                [LF, 1, 4],
                 [0, 2, 0]
             ],
-            /*  1 */[
-                [LF, 0, 1],
-                [CR, 1, 4],
-                [0, 0, 2]
-            ],
             /*  2 */[
-                [this._delimiter, 0, 3],
+                [this._separator, 1, 3],
+                [CR, 8, 4],
+                [LF, 1, 4],
                 [this._quote, 9, 7],
-                [CR, 1, 4],
-                [LF, 0, 4],
                 [0, 2, 0]
             ],
             /*  3 */[
-                [this._quote, 5, 1],
+                [this._quote, 6, 1],
                 [0, 4, 0]
             ],
             /*  4 */[
-                [this._quote, 5, 1],
+                [this._quote, 6, 1],
                 [0, 4, 0]
             ],
             /*  5 */[
-                [this._delimiter, 0, 3],
-                [this._quote, 6, 0],
-                [CR, 1, 4],
-                [LF, 0, 4],
-                [0, 8, 7]
-            ],
-            /*  6 */[
-                [this._quote, 5, 1],
+                [this._quote, 6, 1],
                 [0, 4, 0]
             ],
+            /*  6 */[
+                [this._separator, 1, 2],
+                [this._quote, 5, 0],
+                [CR, 8, 4],
+                [LF, 1, 4],
+                [0, 10, 7]
+            ],
             /*  7 */[
-                [LF, 0, 6],
-                [0, 0, 5]
+                [LF, 1, 6],
+                [0, 1, 5]
             ],
             /*  8 */[
-                [CR, 7, 1],
-                [LF, 0, 6],
-                [0, 8, 1]
+                [CR, 8, 4],
+                [LF, 1, 1],
+                [0, 1, 2]
             ],
             /*  9 */[
                 [CR, 7, 1],
-                [LF, 0, 6],
+                [LF, 1, 6],
                 [0, 9, 1]
             ],
+            /* 10 */[
+                [CR, 7, 1],
+                [LF, 1, 6],
+                [0, 10, 1]
+            ]
         ];
-        this._final = [0, 1, 2, 5];
+        // There is some incorrect action in this table.
+        this._final = [1, 2, 6, 8];
         if (!this._quote) {
-            this._transition[0].splice(0, 1);
-            this._transition[2].splice(1, 1);
-            this._final.splice(3, 1);
-        }
-        else {
-            if (this._quote_required) {
-                this._transition[0][4] = [0, 9, 7];
-            }
+            this._transition[1].shift();
+            this._transition[2].splice(3, 1);
+            this._final.splice(2, 1);
         }
     }
 
@@ -278,16 +230,12 @@ export class CsvParser {
     /**
      * Properties getters
      */
-    public get delimiter(): string {
-        return String.fromCharCode(this._delimiter);
+    public get separator(): string {
+        return String.fromCharCode(this._separator);
     }
 
     public get quote(): string {
         return (this._quote) ? String.fromCharCode(this._quote) : '';
-    }
-
-    public get quote_required(): boolean {
-        return this._quote_required;
     }
 
     public get lineno(): number {
@@ -340,7 +288,6 @@ export class CsvParser {
     }
 
     public parse(chunk: Buffer | string): (void | string | Buffer) {
-        this._initial = false;
         if (typeof chunk === 'string') chunk = Buffer.from(chunk, this._encoding)
         this._parsed = '';
         let n = 0;
@@ -355,18 +302,18 @@ export class CsvParser {
                     return s;
                 case 3: // add field
                 case 4: // add last field
-                    if (this._on_field_callback) this._on_field_callback(this._field, this._record.length, this._lineno);
+                    if (this.onField) this.onField(this._field, this._record.length, this._lineno);
                     this._record.push(this._field);
                     this._field = '';
                     if (action == 3) return s;
-                    this._parsed += this._on_record_callback(this._record, this._lineno);
+                    this._parsed += this.onRecord(this._record, this._lineno) as string;
                     this._record = [];
                     this._lineno++;
                     this._pos = 0;
                     return s;
                 case 5: // Emit error then unshift one character to chunk.
                 case 6: // Emit error.
-                    this._on_error({
+                    this.onError({
                         input: chunk.slice(n - this._pos + ((chunk[n - this._pos] == CR || chunk[n - this._pos] == LF) ? 1 : 0), n - 1).toString(),
                         line: this._lineno,
                         pos: this._saved_pos,
@@ -379,9 +326,9 @@ export class CsvParser {
                     this._saved_index = NaN;
                     this._record = [];
                     this._field = '';
-                    if (action == 6) return (chunk[n] == CR) ? 7 : 0; // Go to state 1 or 0.
+                    if (action == 6) return (chunk[n] == CR) ? 7 : 1; // Go to state 1 or 7.
                     n--;
-                    return 0;
+                    return 1;
                 case 7: // Store error position and state.
                     this._saved_state = s;
                     this._saved_pos = this._pos;
@@ -406,12 +353,11 @@ export class CsvParser {
     }
 
     public accept(): boolean {
-        this._initial = false;
         if (this._final.indexOf(this._state) > -1) {
-            if (this._on_field_callback) this._on_field_callback(this._field, this._record.length, this._lineno);
+            if (this.onField) this.onField(this._field, this._record.length, this._lineno);
             this._record.push(this._field);
             this._field = '';
-            this._parsed = this._on_record_callback(this._record, this._lineno) as string;
+            this._parsed = this.onRecord(this._record, this._lineno) as string;
             this._record = [];
             this._lineno++;
             this._pos = 0;

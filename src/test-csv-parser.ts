@@ -1,9 +1,11 @@
 /**
  * File: test-csv-parser.ts
- * Purpose: Implements CsvParser class test.
+ * Purpose: Implements CsvParser test.
  */
 
 import { CsvParser } from './csv-parser'
+
+console.log('test-csv-parser.ts: Start.')
 
 CsvParser.parse([
     '"aaa"', '\r\n',  //  1: OK
@@ -18,6 +20,8 @@ CsvParser.parse([
     '"a""aa","bbb","ccc","ddd"', '\r\n',  // 10: OK
     '"aaa","bbb","ccc"', '\r\n',  // 11: OK
     '"xa""a","bbb","ccc"', '\r\n',  // 12: OK
-].join());
+].join(''));
 
 console.log('test-csv-parser.ts: Done.')
+
+process.stdin.on('data', (data) => console.log(data.toString()))

@@ -2,8 +2,9 @@
 
 The [RFC 4180](https://www.rfc-editor.org/rfc/rfc4180) documents the
 format used for Comma-Separated Values (CSV) files and registers the
-associated [MIME type "text/csv"](https://www.rfc-editor.org/rfc/rfc4180#section-3) (as per [RFC 2048](https://www.rfc-editor.org/rfc/rfc2048)).
-It does not specify a standard.
+associated [MIME type "text/csv"](https://www.rfc-editor.org/rfc/rfc4180#section-3)
+(as per [RFC 2048](https://www.rfc-editor.org/rfc/rfc2048)). It does not
+specify a standard.
 
 The CSV format has been used for exchanging and converting data
 between various programs for quite some time without a formal
@@ -74,10 +75,33 @@ array of triples [input, state, action] with the last element of
 first dimension being the default transition of current state (the
 transition for unmatched input symbol in current state).
 
+```javascript
+s := s0;
+procedure parse(chunk: array of char)
+    n := 0
+    function move() : integer;
+    begin
+        s, n, and chunk is in scope of move
+        return next state
+    end;
+    while n < length of chunk do
+        s := move()
+        n := n + 1;
+    end;
+end;
+function accept: boolean;
+    if s is in F then begin
+        s:= move()
+        return true;
+    end
+    else
+        return false;
+end;
+```
 ........................................................................
 
 ### The line break problem
-
+One or multiple characters used to delimit records; defaults to auto discovery if not provided. Supported auto discovery methods are Linux ("\n"), Apple ("\r") and Windows ("\r\n") row delimiters.
 * [RFC 2045 - Session 2.1. CRLF](https://www.rfc-editor.org/rfc/rfc2045#section-2.1)
 * [RFC 2046 - Session 4.1.1. Representation of Line Breaks](https://www.rfc-editor.org/rfc/rfc2046#section-4.1.1)
 

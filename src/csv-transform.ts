@@ -16,18 +16,18 @@ export class CsvTransform extends Transform {
     }
     public _flush(callback: TransformCallback): void {
         if (this.csv.accept() && this.onFlush) this.onFlush();
+        callback(null,this.csv.parsed);
     }
     private constructor(options?: CsvTransformOptions) {
         super();
-
         if (options!.onFlush) this.onFlush = options!.onFlush;
         this.csv = CsvParser.create(options);
     }
     public static create(options?: CsvTransformOptions) {
         return new CsvTransform(options);
     }
-    public get separator(): string {
-        return this.csv.separator;
+    public get delimiter(): string {
+        return this.csv.delimiter;
     }
     public get quote(): string {
         return this.csv.quote;

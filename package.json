@@ -20,16 +20,22 @@
     "start": "node dist/index.js",
     "test-csv-parser": "ts-node-dev --respawn --transpile-only src/test-csv-parser.ts",
     "test-csv-transform": "ts-node-dev --respawn --transpile-only src/test-csv-transform.ts",
+    "test-csv-writable": "ts-node-dev --respawn --transpile-only src/test-csv-writable.ts",
+    "test-csv-writable-shot": "npm run build && node dist/test-csv-writable.js",
+    "test-csv-transform-shot": "npm run build && node dist/test-csv-transform.js",
+    "test-download-readable": "ts-node-dev --respawn --transpile-only src/test-download-readable.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "event-stream": "^4.0.1",
     "json5": "^2.2.1",
-    "ts-morph": "^16.0.0"
+    "ts-morph": "^16.0.0",
+    "yauzl": "^2.10.0"
   },
   "devDependencies": {
     "@types/event-stream": "^4.0.0",
     "@types/node": "^18.11.9",
+    "@types/yauzl": "^2.10.0",
     "rimraf": "^3.0.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^4.8.4"
